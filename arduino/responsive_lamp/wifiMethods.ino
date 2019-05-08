@@ -90,7 +90,7 @@ void setupRTC() {
   }
 
   if (numberOfTries >= maxTries) {
-    Serial.print("NTP unreachable!!");
+    Serial.print("NTP unreachable!! Trying again");
     while (epoch == 0) {
       epoch = WiFi.getTime();
       numberOfTries++;
@@ -134,7 +134,7 @@ void handleServer() {
 
   WiFiClient client = server.available();
   if (client) {
-    
+
     long timeout = 5000;
     long timeoutCheckpoint = millis();
     Serial.println("new client");
@@ -148,8 +148,8 @@ void handleServer() {
       /////////////
       // TIMEOUT //
       /////////////
-      
-      if(millis() - timeoutCheckpoint > timeout){
+
+      if (millis() - timeoutCheckpoint > timeout) {
         Serial.print("\n\n\nTIMEOUT\n\n\n");
         client.stop();
         return;
@@ -158,7 +158,7 @@ void handleServer() {
       /////////////////
       // READ CLIENT //
       /////////////////
-      
+
       if (client.available()) {
         char c = client.read();
         if (storeData) {
@@ -169,11 +169,11 @@ void handleServer() {
         if (debug_verbose) {
           Serial.write(c);
         }
-        
+
         /////////////
         // MESSAGE //
         /////////////
-        
+
         //Since I have no idea what I'm doing, this is the hackey way I've figure to get info from route.
         if (c == '?') {
           storeData = true;   //Flag next char as read char
@@ -215,12 +215,12 @@ void handleServer() {
     client.stop();
     Serial.println("client disconnected");
 
-    if (data != userControlData) {
-      prevUserControlData = userControlData;
-      userControlData = data;
-      Serial.println(">>> New Data! <<<");
-      Serial.println(userControlData);
-    }
+    //if (data != userControlData) {
+    prevUserControlData = userControlData;
+    userControlData = data;
+    Serial.println(">>> New Data! <<<");
+    Serial.println(userControlData);
+    //}
   }
 }
 
@@ -260,7 +260,7 @@ void sendRequest(int light, String cmd, String value) {
   Serial.print("Server response: ");
   Serial.println(response);
   //Serial.println();
-
+  delay(1000);
 }
 
 

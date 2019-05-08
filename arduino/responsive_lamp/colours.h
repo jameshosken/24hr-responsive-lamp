@@ -9,7 +9,9 @@
 #define HSB_NIGHT {40,75,10}
 #define HSB_OFF {0,100,0}
 
-#define HSB_CANDLE {44, 54, 50}
+#define HSB_CANDLE {44, 54, 10}
+#define HSB_SUNRISE {30, 240, 50}
+#define HSB_SUNSET {0, 254, 50}
 
 
 

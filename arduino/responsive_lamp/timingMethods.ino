@@ -81,11 +81,11 @@ void handleTimingColours(int hour) {
 
   //Cathc off state
   if(hour >=9 && hour <= 15){
-    sendRequest(2, "on", "false");
+    sendRequest(bulb, "on", "false");
     Serial.println("Turning light off");
     return;
   }else{
-    sendRequest(2, "on", "true");
+    sendRequest(bulb, "on", "true");
     Serial.println("Turning light on");
     delay(1000);
   }

@@ -105,6 +105,43 @@ void pixSetHSB(int _h, int _s, int _b) {
   pixDisplay();
 }
 
+void pixSetSunrise() {
+  for (int i = 0; i < NUMPIX; i++) {
+    
+    if (random(0, 100) < 33) {
+      //blue/purp
+      hsi[i][0] = random(20,30);
+      hsi[i][1] = 100; 
+      hsi[i][2] = 100;
+    } else {
+      hsi[i][0] = random(0,10);
+      hsi[i][1] = 100;
+      hsi[i][2] = 100;
+    }
+  }
+  pixDisplay();
+}
+
+
+
+void pixSetSunset() {
+  for (int i = 0; i < NUMPIX; i++) {
+    
+    if (random(0, 100) < 20) {
+      //blue/purp
+      hsi[i][0] = random(280,300);;
+      hsi[i][1] = 100; 
+      hsi[i][2] = 100;
+    } else {
+      hsi[i][0] = random(0, 25);
+      hsi[i][1] = 100;
+      hsi[i][2] = 100;
+    }
+  }
+  pixDisplay();
+}
+
+
 void pixFadeOut() {
   Serial.println("BEGIN FADE");
   for(int i = 0; i < 255; i++){

@@ -27,6 +27,7 @@
 #include <ArduinoHttpClient.h>
 
 bool debug_verbose = true;
+int demoCounter = 0;
 
 const char ssid[] = secret_ssid;      //  your network SSID (name)
 const char pass[] = secret_password;   // your network password
@@ -35,8 +36,10 @@ int status = WL_IDLE_STATUS;
 WiFiServer server(80);
 
 // HUE CONFIG
-const char hueHubIP[] = "192.168.1.5";
-const String hueUserName = "42AoOKmuvkxpCwDeU5F4Z2AhAz3jGYTtpfqRfvIp"; // hue bridge username
+//const char hueHubIP[] = "192.168.1.5";
+const char hueHubIP[] = "128.122.151.168";
+const String hueUserName = "Ra52iwspJn7fBcU8kKzsaGSqiASydGCkOkPDJqRH"; // hue bridge READINGname
+const int bulb = 5;
 
 WiFiClient wifi;
 HttpClient httpClient = HttpClient(wifi, hueHubIP);
@@ -74,38 +77,38 @@ int change = 1;              // increment to change hue by
 
 //INTERACTIONS
 
-//Define enum for how the lamp is controlled: via timer, via user, or auto (no connection)
+//Define enum for how the lamp is controlled: via timer, READING mode, or CANDLE mode (no connection)
 enum control {
   TIMING,
-  USER,
-  AUTO
-};
-
-enum behaviour {
+  READING,
   CANDLE,
-  FADING,
   SUNRISE,
   SUNSET,
+  DEMO
 };
 
+
+
 control controlSystem = TIMING;
-control prevControlSystem = AUTO; //Useful for detecting changes
+control prevControlSystem = CANDLE; //Useful for detecting changes
 
 // Keep data from server to determine behaviour,
 // Keep prev data from server to determine if change has been made.
 char userControlData = ' ';
 char prevUserControlData = ' ';
 
-const char timingChar = 'T';
-const char userChar = 'U';
-const char autoChar = 'A';
-
+const char TIMINGChar = 'T';
+const char READINGChar = 'R';
+const char CANDLEChar = 'C';
+const char SUNRISEChar = 'M';   //Morning
+const char SUNSETChar = 'E';    //Evening
+const char DEMOChar = 'D';    //Evening  
 /////////////////////
 //END INTERACTIONS //
 /////////////////////
 
 ////////////////////////
-// AUTO (CANDLE MODE) //
+// CANDLE (CANDLE MODE) //
 ////////////////////////
 
 // bruPeriod, briMin, briMax, huePeriod, hueMin, hueMax
@@ -153,11 +156,20 @@ void connectedLoop() {
     case TIMING:
       handleTimingControl();
       break;
-    case USER:
-      handleUserControl();
+    case READING:
+      handleREADINGControl();
       break;
-    case AUTO:
-      handleAutoControl();
+    case CANDLE:
+      handleCANDLEControl();
+      break;
+    case SUNSET:
+      handleSUNSETControl();
+      break;
+    case SUNRISE:
+      handleSUNRISEControl();
+      break;
+    case DEMO:
+      handleDEMOControl();
       break;
     default:
       break;
@@ -173,7 +185,7 @@ void connectedLoop() {
 
 
   // wait 4 seconds
-  //sendRequest(2, "on", "false");  // turn light off
+  //sendRequest(bulb, "on", "false");  // turn light off
 
 }
 
@@ -196,58 +208,111 @@ void handleTimingControl() {
     delay(1); //only run once this millisecond
 
   }
-
 }
 
-void handleUserControl() {
+void handleDEMOControl() {
   if(prevControlSystem != controlSystem){
-    currentHour = -1;
-    int userHSB[3] = HSB_DEEP_RED;
-    setPhilipsHSB(userHSB[0], userHSB[1], userHSB[2]); 
+    int timingHSB[3] = HSB_NIGHT;
+    pixFadeOut();
+    setPhilipsHSB(timingHSB[0], timingHSB[1], timingHSB[2]); 
     prevControlSystem = controlSystem;
   }
   
-  if (millis() % 5000 == 0) {
-    int s = random(0, 100);
-    sendRequest(2, "sat", String(s));   // turn light on
-    delay(1);
+  //Update every minute //Todo revert to minute
+  if (millis() % 10000 == 0) {
+    demoCounter = (demoCounter + 1) % 24;
+    handleTimingColours(demoCounter);
+    delay(1); //only run once this millisecond
+
   }
 }
 
-void handleAutoControl() {
+void handleCANDLEControl() {
   if(prevControlSystem != controlSystem){
     //Changed!
     currentHour = -1;
-    Serial.println("HANDLING AUTO");
-    int autoHSB[3] = HSB_CANDLE;
-    setPhilipsHSB(autoHSB[0], autoHSB[1], autoHSB[2]); 
+    Serial.println("HANDLING CANDLE");
+    sendRequest(bulb, "on", "true");
+    int candleHSB[3] = HSB_CANDLE;
+    setPhilipsHSB(candleHSB[0], candleHSB[1], candleHSB[2]); 
     prevControlSystem = controlSystem;
   }
-  
   updateCandle();
- 
+}
+
+void handleREADINGControl() {
+  if(prevControlSystem != controlSystem){
+    
+    //Changed!
+    currentHour = -1;
+    Serial.println("HANDLING READING");
+    sendRequest(bulb, "on", "true");
+    int readingHSB[3] = HSB_WW;
+    setPhilipsHSB(readingHSB[0], readingHSB[1], readingHSB[2]); 
+    prevControlSystem = controlSystem;
+    pixFadeOut();
+  }
+}
+
+void handleSUNRISEControl() {
+  if(prevControlSystem != controlSystem){
+    //Changed!
+    currentHour = -1;
+    Serial.println("HANDLING SUNRISE");
+    sendRequest(bulb, "on", "true");
+    int sunriseHSB[3] = HSB_SUNRISE;
+    setPhilipsHSB(sunriseHSB[0], sunriseHSB[1], sunriseHSB[2]);   
+    pixSetSunrise();
+    prevControlSystem = controlSystem;
+  }
+}
+
+void handleSUNSETControl() {
+  if(prevControlSystem != controlSystem){
+    //Changed!
+    currentHour = -1;
+    Serial.println("HANDLING SUNRISE");
+    sendRequest(bulb, "on", "true");
+    int sunsetHSB[3] = HSB_SUNSET;
+    setPhilipsHSB(sunsetHSB[0], sunsetHSB[1], sunsetHSB[2]); 
+    pixSetSunset();
+    prevControlSystem = controlSystem;
+  }
 }
 
 
 void handleUserControlData() {
   if (userControlData != prevUserControlData) {
+    Serial.println("\n>\n>\n>Change of control system");
     prevUserControlData = userControlData;
 
     switch (userControlData) {
-      case timingChar:
+      case TIMINGChar:
         Serial.println("USING TIMING CONTROL");
         controlSystem = TIMING;
         break;
-      case userChar:
-        Serial.println("USING USER CONTROL");
-        controlSystem = USER;
+      case READINGChar:
+        Serial.println("USING READING CONTROL");
+        controlSystem = READING;
         break;
-      case autoChar:
-        Serial.println("USING AUTO CONTROL");
-        controlSystem = AUTO;
+      case CANDLEChar:
+        Serial.println("USING CANDLE CONTROL");
+        controlSystem = CANDLE;
+        break;
+      case SUNRISEChar:
+        Serial.println("USING SUNRISE CONTROL");
+        controlSystem = SUNRISE;
+        break;
+      case SUNSETChar:
+        Serial.println("USING SUNSET CONTROL");
+        controlSystem = SUNSET;
+        break;
+      case DEMOChar:
+        Serial.println("USING SUNSET CONTROL");
+        controlSystem = DEMO;
         break;
       default:
-        Serial.println("BEHAVIOUR");
+        Serial.println("NOT USEFUL DATA");
         //Probably a behaviour char, do nothing.
         break;
     }
@@ -255,7 +320,7 @@ void handleUserControlData() {
 }
 
 void disconnectedLoop() {
-  handleAutoControl();
+  handleCANDLEControl();
 }
 
 

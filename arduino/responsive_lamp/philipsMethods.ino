@@ -16,15 +16,13 @@ void setPhilipsHSB(int _h, int _s, int _b){
   Serial.println("Setting Philips");
   //Bri first, then sat, then hue, to avoid sudden flashes of unwanted bright colours
   int b = briToPhilips(_b);
-  sendRequest(2, "bri", String(b));   // turn light on
-  delay(1000);
+  sendRequest(bulb, "bri", String(b));   // turn light on
 
   int h = hueToPhilips(_h);
-  sendRequest(2, "hue", String(h));   // turn light on
-  delay(1000);
+  sendRequest(bulb, "hue", String(h));   // turn light on
 
   int s = satToPhilips(_s);
-  sendRequest(2, "sat", String(s));   // turn light on
+  sendRequest(bulb, "sat", String(s));   // turn light on
   Serial.println("Set Philips");
   Serial.println("\n\n");
   
