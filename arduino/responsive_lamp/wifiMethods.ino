@@ -1,10 +1,10 @@
 
 
 void setupWiFi() {
-  
-  pixSetHSB(200,100,100);
-  
-  
+
+  pixSetHSB(200, 100, 100);
+
+
   Serial.print("WiFi101 shield: ");
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("NOT PRESENT");
@@ -36,22 +36,22 @@ void setupWiFi() {
   }
 
   if (isConnected) {
-    
-    setPhilipsHSB(0,0,0);
-    
+
+    //setPhilipsHSB(0, 0, 0);
+
     setupRTC();
     pixSetHue(120);
-    
-    for(int i = 0; i <5; i++){
+
+    for (int i = 0; i < 5; i++) {
 
       pixSetBri(100);
-      pixDisplay(); 
+      pixDisplay();
       delay(250);
       pixSetBri(0);
-      pixDisplay(); 
+      pixDisplay();
       delay(250);
     }
-    
+
     server.begin();                           // start the web server on port 80
     printWiFiStatus();                        // you're connected now, so print out the status
   } else {
@@ -65,24 +65,49 @@ void setupWiFi() {
 void setupRTC() {
   rtc.begin();
   unsigned long epoch;
-  int numberOfTries = 0, maxTries = 6;
+  int numberOfTries = 0, maxTries = 8;
+
+  pixSetHSB(330, 100, 100);
+  pixDisplay();
+
   do {
+    Serial.println("Trying to get epoch");
     epoch = WiFi.getTime();
     numberOfTries++;
+    delay(250);
   }
   while ((epoch == 0) && (numberOfTries < maxTries));
+  if (epoch == 0) {
+    Serial.println("Failed. Trying again to get epoch");
+    numberOfTries = 0;
+    do {
+      Serial.println("Trying to get epoch");
+      epoch = WiFi.getTime();
+      numberOfTries++;
+      delay(250);
+    }
+    while ((epoch == 0) && (numberOfTries < maxTries));
+  }
 
-  if (numberOfTries > maxTries) {
+  if (numberOfTries >= maxTries) {
     Serial.print("NTP unreachable!!");
-    while (1);
-  }
-  else {
-    Serial.print("Epoch received: ");
-    Serial.println(epoch);
-    rtc.setEpoch(epoch);
+    while (epoch == 0) {
+      epoch = WiFi.getTime();
+      numberOfTries++;
+      Serial.println("Trying to get epoch");
+      delay(1000);
 
-    Serial.println();
+    }
   }
+
+
+  Serial.print("Epoch received: ");
+  Serial.println(epoch);
+
+  rtc.setEpoch(epoch);
+
+  Serial.println();
+
 }
 
 
@@ -109,7 +134,9 @@ void handleServer() {
 
   WiFiClient client = server.available();
   if (client) {
-
+    
+    long timeout = 5000;
+    long timeoutCheckpoint = millis();
     Serial.println("new client");
     // an http request ends with a blank line
 
@@ -117,6 +144,21 @@ void handleServer() {
     char data = ' ';
     boolean currentLineIsBlank = true;
     while (client.connected()) {
+
+      /////////////
+      // TIMEOUT //
+      /////////////
+      
+      if(millis() - timeoutCheckpoint > timeout){
+        Serial.print("\n\n\nTIMEOUT\n\n\n");
+        client.stop();
+        return;
+      }
+
+      /////////////////
+      // READ CLIENT //
+      /////////////////
+      
       if (client.available()) {
         char c = client.read();
         if (storeData) {
@@ -127,7 +169,11 @@ void handleServer() {
         if (debug_verbose) {
           Serial.write(c);
         }
-
+        
+        /////////////
+        // MESSAGE //
+        /////////////
+        
         //Since I have no idea what I'm doing, this is the hackey way I've figure to get info from route.
         if (c == '?') {
           storeData = true;   //Flag next char as read char
@@ -139,34 +185,13 @@ void handleServer() {
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println("Connection: close");  // the connection will be closed after completion of the response
-          client.println("Refresh: 60");  // refresh the page automatically every 60 sec
+          client.println("Refresh: 600");  // refresh the page automatically every 60 sec
           client.println();
           client.println("<!DOCTYPE HTML>");
           client.println("<html>");
 
           //Response HTML:
           client.println("Success!");
-          // output the value of each pixel
-          //          for (int pix = 0; pix < NUMPIX; pix++) {
-          //            int hueVal = hsi[pix][0];
-          //            client.print("Pixel ");
-          //            client.print(pix);
-          //            client.print(" is ");
-          //            client.print(hueVal);
-          //
-          //            int satVal = hsi[pix][0];
-          //            client.print("Pixel ");
-          //            client.print(pix);
-          //            client.print(" is ");
-          //            client.print(hueVal);
-          //
-          //            int hueVal = hsi[pix][0];
-          //            client.print("Pixel ");
-          //            client.print(pix);
-          //            client.print(" is ");
-          //            client.print(hueVal);
-          //            client.println("<br />");
-          //          }
           client.println("</html>");
           break;
         }
@@ -184,7 +209,7 @@ void handleServer() {
 
     }
     // give the web browser time to receive the data
-    delay(10);
+    delay(100);
 
     // close the connection:
     client.stop();
@@ -218,7 +243,7 @@ void sendRequest(int light, String cmd, String value) {
   hueCmd += value;
   hueCmd += "}";
   // see what you assembled to send:
-  //Serial.print("PUT request to server: ");
+  Serial.print("PUT request to server: ");
   Serial.println(request);
   //Serial.print("JSON command to server: ");
 
@@ -235,6 +260,7 @@ void sendRequest(int light, String cmd, String value) {
   Serial.print("Server response: ");
   Serial.println(response);
   //Serial.println();
+
 }
 
 

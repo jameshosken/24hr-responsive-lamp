@@ -9,6 +9,8 @@
 #define HSB_NIGHT {40,75,10}
 #define HSB_OFF {0,100,0}
 
+#define HSB_CANDLE {44, 54, 50}
+
 
 
 /*

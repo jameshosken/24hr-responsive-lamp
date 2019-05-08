@@ -3,10 +3,17 @@ int getHour()
 { 
   //No need for GMT?
   Serial.println("#########");
-  Serial.print("GET HOURS(): ");
-  int hour = (rtc.getHours() % 24);
-  Serial.println(hour);
+  Serial.println("GET HOURS(): ");
   
+  int hour = ((rtc.getHours() + GMT) % 24);
+  Serial.print("RAW: ");
+  Serial.println(rtc.getHours());
+  if(hour < 0){
+    hour += 24;
+  }
+  
+  Serial.print("CONVERTED: ");
+  Serial.println(hour);
   
   delay(10);
   return (hour);
@@ -71,6 +78,17 @@ void handleTimingColours(int hour) {
     HSB_WW,         //10-11
     HSB_NIGHT       //11-12    
   };
+
+  //Cathc off state
+  if(hour >=9 && hour <= 15){
+    sendRequest(2, "on", "false");
+    Serial.println("Turning light off");
+    return;
+  }else{
+    sendRequest(2, "on", "true");
+    Serial.println("Turning light on");
+    delay(1000);
+  }
   
   //Use hour as index to get colour for current hour
   int current[] = {hueColours[hour][0], hueColours[hour][1], hueColours[hour][2]};

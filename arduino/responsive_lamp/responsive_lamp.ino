@@ -48,7 +48,7 @@ bool isConnected = false;
 #include <RTCZero.h>
 
 RTCZero rtc;
-const int GMT = -4; //change this to adapt it to your time zone
+int GMT = -4; //change this to adapt it to your time zone
 
 /////////////////////
 // END WIFI CONFIG //
@@ -180,8 +180,8 @@ void connectedLoop() {
 void handleTimingControl() {
   if(prevControlSystem != controlSystem){
     int timingHSB[3] = HSB_NIGHT;
+    pixFadeOut();
     setPhilipsHSB(timingHSB[0], timingHSB[1], timingHSB[2]); 
-    pixSetHSB(0,0,0);
     prevControlSystem = controlSystem;
   }
   
@@ -201,6 +201,7 @@ void handleTimingControl() {
 
 void handleUserControl() {
   if(prevControlSystem != controlSystem){
+    currentHour = -1;
     int userHSB[3] = HSB_DEEP_RED;
     setPhilipsHSB(userHSB[0], userHSB[1], userHSB[2]); 
     prevControlSystem = controlSystem;
@@ -216,17 +217,15 @@ void handleUserControl() {
 void handleAutoControl() {
   if(prevControlSystem != controlSystem){
     //Changed!
+    currentHour = -1;
     Serial.println("HANDLING AUTO");
-    int autoHSB[3] = HSB_WW;
+    int autoHSB[3] = HSB_CANDLE;
     setPhilipsHSB(autoHSB[0], autoHSB[1], autoHSB[2]); 
     prevControlSystem = controlSystem;
   }
   
   updateCandle();
-  
-
-
-  
+ 
 }
 
 

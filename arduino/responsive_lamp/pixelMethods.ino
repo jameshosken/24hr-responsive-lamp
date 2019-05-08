@@ -19,11 +19,11 @@ void pixSetup() {
 void setupCandle() {
   for (int i = 0; i < NUMPIX; i++) {
     
-    if (random(0, 100) < 10) {
+    if (random(0, 100) < 5) {
       //blue/purp
       candleValues[i][0] = random(10, 2000);
       candleValues[i][1] = 230; //Blue
-      candleValues[i][2] = 340; //Pink
+      candleValues[i][2] = 310; //Pink
       candleValues[i][3] = random(100, 2000);
       candleValues[i][4] = random(0, 100);
       candleValues[i][5] = random(150, 255);
@@ -31,7 +31,7 @@ void setupCandle() {
       //Red/yellow
       candleValues[i][0] = random(50, 3000);
       candleValues[i][1] = 0;
-      candleValues[i][2] = 35;
+      candleValues[i][2] = random(20,35);
       candleValues[i][3] = random(50, 3000);
       candleValues[i][4] = random(0, 100);
       candleValues[i][5] = random(150, 255);
@@ -98,10 +98,33 @@ void pixSetBri(int bri) {
 }
 
 void pixSetHSB(int _h, int _s, int _b) {
+
   pixSetHue(_h);
   pixSetSat(_s);
   pixSetBri(_b);
   pixDisplay();
+}
+
+void pixFadeOut() {
+  Serial.println("BEGIN FADE");
+  for(int i = 0; i < 255; i++){
+    Serial.print(".");
+    for (int pix = 0; pix < NUMPIX; pix++){
+      if(hsi[pix][0] > 0){
+        hsi[pix][0]--;
+      }
+      if(hsi[pix][1] > 0){
+        hsi[pix][1]--;
+      }
+      if(hsi[pix][2] > 0){
+        hsi[pix][2]--;
+      }
+    }
+    pixDisplay();
+    delay(2);
+  }
+  Serial.println();
+  Serial.println("END FADE");
 }
 
 
